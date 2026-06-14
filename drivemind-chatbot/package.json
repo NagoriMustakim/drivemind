@@ -5,7 +5,7 @@
   "description": "DriveMind Chatbot — assistant runtime + embeddable Otto widget (DriveMind APP 3)",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run widget:build && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
