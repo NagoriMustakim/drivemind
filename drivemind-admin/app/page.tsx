@@ -136,7 +136,7 @@ export default function AdminPage() {
   const [dealerId, setDealerId] = useState("nextgear");
 
   // API sync state
-  const [apiUrl, setApiUrl] = useState("https://drivemind-admin.vercel.app/api/cars");
+  const [apiUrl, setApiUrl] = useState("https://nextgeardeal.vercel.app/api/cars");
   const [token, setToken] = useState("");
   const [job, setJob] = useState<SyncJob | null>(null);
   const [busy, setBusy] = useState(false);
@@ -389,7 +389,7 @@ export default function AdminPage() {
                 className="field"
                 value={apiUrl}
                 onChange={(e) => setApiUrl(e.target.value)}
-                placeholder="https://drivemind-admin.vercel.app/api/cars"
+                placeholder="https://nextgeardeal.vercel.app/api/cars"
                 required
               />
             </label>
