@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Constitution Principle I: the mirrored contract + KB schema must not drift.
+  contract-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify contract.ts / SCHEMA.md / kb-schema.sql are in sync across repos
+        run: bash scripts/sync-contract.sh --check
+
+  # Constitution Principle II: no secrets in client-shipped code.
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for leaked keys / non-public env usage in client code
+        run: |
+          set -eo pipefail
+          # Provider key shapes that must never appear anywhere in source.
+          if grep -rEn 'sk-ant-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{20,}|service_role' \
+              --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' \
+              nextgear-site drivemind-admin drivemind-chatbot 2>/dev/null; then
+            echo "::error::Possible secret committed in source. Remove it." && exit 1
+          fi
+          # Client bundles must not read server-only env (only NEXT_PUBLIC_* allowed client-side).
+          if grep -rEn "process\.env\.(?!NEXT_PUBLIC_)" \
+              --include='*.tsx' drivemind-chatbot/widget/src 2>/dev/null; then
+            echo "::error::Widget client code reads a non-public env var." && exit 1
+          fi
+          echo "secret-scan OK"
+
+  # Per-app lint (incl. cross-app-import rule), typecheck, and tests.
+  apps:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [nextgear-site, drivemind-admin, drivemind-chatbot]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
+      - run: npm test
+
+  # Constitution Principle VI: the embeddable widget stays <15KB gzipped.
+  widget-size:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drivemind-chatbot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run widget:build
+      - run: npm run widget:size

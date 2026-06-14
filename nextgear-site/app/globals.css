@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #08080a;
+  --foreground: #f4f4f6;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-feature-settings: "ss01", "cv01";
+  }
+
+  ::selection {
+    background: #e11d2a;
+    color: #fff;
+  }
+
+  /* Themed scrollbar (WebKit) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0d11;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a33;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e11d2a;
+  }
+}
+
+@layer components {
+  /* Section wrapper with consistent gutters */
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12;
+  }
+
+  /* Small caps eyebrow label used above section headings */
+  .eyebrow {
+    @apply font-condensed text-xs uppercase tracking-mega text-accent;
+  }
+
+  /* Primary red button */
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3 font-condensed text-sm uppercase tracking-widest text-white transition-all duration-300 hover:bg-accent-bright hover:shadow-glow;
+  }
+
+  /* Ghost / outline button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-7 py-3 font-condensed text-sm uppercase tracking-widest text-white transition-all duration-300 hover:border-accent hover:text-accent;
+  }
+
+  /* Card surface */
+  .surface {
+    @apply rounded-2xl border border-white/5 bg-carbon;
+  }
+}
+
+@layer utilities {
+  /* Scroll-reveal: starts hidden, .is-visible animates it in. JS toggles the class. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition:
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Animated text gradient for accents */
+  .text-gradient {
+    background: linear-gradient(90deg, #fff 0%, #fff 40%, #ff7a7e 70%, #e11d2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Faint dot/grid texture */
+  .bg-noise {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Showroom "spotlight" backdrop for car photos (esp. transparent studio PNGs):
+     a soft graphite cone of light with a warm red kiss, so white/black/red cars
+     pop instead of sitting on flat grey. */
+  .bg-spotlight {
+    background:
+      radial-gradient(90% 70% at 50% 18%, rgba(225, 29, 42, 0.16), transparent 55%),
+      radial-gradient(120% 95% at 50% 30%, #30303a 0%, #18181f 52%, #0c0c10 100%);
+  }
+
+  /* Animated red glow ring used on focus/featured cards. */
+  .ring-glow {
+    box-shadow:
+      0 30px 60px -24px rgba(0, 0, 0, 0.85),
+      0 0 44px -14px rgba(225, 29, 42, 0.55);
+  }
+
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

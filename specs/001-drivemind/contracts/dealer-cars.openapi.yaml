@@ -1,0 +1,62 @@
+openapi: 3.1.0
+info:
+  title: NextGear Motors — Dealer Inventory API
+  version: 1.0.0
+  description: >
+    Token-protected read interface exposed by nextgear-site (APP 1) and consumed by
+    drivemind-admin during Sync. Returns available inventory in the shared contract Car shape.
+servers:
+  - url: https://nextgear-site.example.vercel.app
+paths:
+  /api/cars:
+    get:
+      summary: List all available cars (shared contract shape)
+      security:
+        - bearerToken: []
+      responses:
+        "200":
+          description: All available cars for this dealer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CarsResponse"
+        "401":
+          description: Missing or invalid Bearer token.
+        "503":
+          description: Inventory database temporarily unavailable (e.g., Supabase idle-pause).
+components:
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+      description: Authorization "Bearer <token>". The token is verified server-side.
+  schemas:
+    BodyType:
+      type: string
+      enum: [SUV, Sedan, Coupe, Truck, Convertible, Hatchback, Van, Wagon]
+    Car:
+      type: object
+      required: [id, make, model, year, mileage, price, bodyType, specs, imageUrl, detailUrl]
+      properties:
+        id: { type: string }
+        make: { type: string }
+        model: { type: string }
+        year: { type: integer }
+        mileage: { type: integer, minimum: 0 }
+        price: { type: integer, minimum: 0, description: Whole USD }
+        bodyType: { $ref: "#/components/schemas/BodyType" }
+        specs:
+          type: object
+          additionalProperties:
+            oneOf: [{ type: string }, { type: number }, { type: boolean }]
+        imageUrl: { type: string, format: uri }
+        detailUrl: { type: string, format: uri }
+      description: Customer-facing fields ONLY. No internal/non-customer fields.
+    CarsResponse:
+      type: object
+      required: [dealerId, cars]
+      properties:
+        dealerId: { type: string }
+        cars:
+          type: array
+          items: { $ref: "#/components/schemas/Car" }

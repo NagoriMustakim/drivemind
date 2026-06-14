@@ -1,0 +1,106 @@
+openapi: 3.1.0
+info:
+  title: DriveMind Chatbot — Assistant Runtime API
+  version: 1.0.0
+  description: >
+    drivemind-chatbot (APP 3). The widget calls POST /session with the public dealerId; the server
+    validates Origin/Referer against the dealer's registered domain and issues a short-lived JWT.
+    POST /query embeds only the short query, runs ONE pgvector filter+cosine SQL (LIMIT 5), sends
+    <=5 cars to the answer model (Claude by default, behind one config flag) under a structured-output
+    schema, verifies every returned car id exists, and streams the reply via SSE. CORS is locked to
+    the dealer domain; requests are rate-limited per token/IP.
+servers:
+  - url: https://drivemind-chatbot.example.vercel.app
+paths:
+  /session:
+    post:
+      summary: Issue a short-lived session JWT after Origin/Referer validation
+      description: >
+        CORS restricted to the dealer's registered domain. The server checks the Origin/Referer header
+        against dealers.registered_domain for the given dealerId before issuing a token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dealerId]
+              properties:
+                dealerId: { type: string, description: Public dealer id embedded in the widget }
+      responses:
+        "200":
+          description: Session token issued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expiresIn]
+                properties:
+                  token: { type: string, description: Short-lived JWT for subsequent /query calls }
+                  expiresIn: { type: integer, description: Seconds until expiry }
+        "403": { description: Origin/Referer does not match the dealer's registered domain. }
+        "404": { description: Unknown dealerId. }
+        "429": { description: Rate limit exceeded for this IP. }
+  /query:
+    post:
+      summary: Ask the assistant; reply is streamed via SSE
+      description: >
+        Requires a valid session JWT. Embeds only the short query (Gemini RETRIEVAL_QUERY), runs one
+        filter+cosine SQL scoped to the dealer (LIMIT 5), sends <=5 cars to the answer model, verifies
+        returned ids exist, and streams tokens. Off-topic requests are politely declined. User input is
+        treated as hostile (prompt-injection defended; no internal fields exposed).
+      security:
+        - sessionJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, description: The visitor's natural-language request }
+                history:
+                  type: array
+                  description: Optional prior turns for context
+                  items:
+                    type: object
+                    properties:
+                      role: { type: string, enum: [user, assistant] }
+                      content: { type: string }
+      responses:
+        "200":
+          description: >
+            SSE stream (text/event-stream). Token deltas for the reply text, then a final event whose
+            data is the validated AssistantResult JSON (cars filtered to ids that exist).
+          content:
+            text/event-stream:
+              schema: { type: string }
+        "401": { description: Missing/expired session JWT. }
+        "429": { description: Rate limit exceeded for this token/IP. }
+        "503": { description: Knowledge base temporarily unavailable (e.g., Supabase idle-pause). }
+components:
+  securitySchemes:
+    sessionJwt:
+      type: http
+      scheme: bearer
+      description: Short-lived JWT issued by POST /session.
+  schemas:
+    RecommendedCar:
+      type: object
+      required: [id, why]
+      properties:
+        id: { type: string, description: Must exist in the dealer's knowledge base }
+        why: { type: string, description: One-line reason this car fits }
+    AssistantResult:
+      type: object
+      required: [response, cars, suggestedAnswers]
+      properties:
+        response: { type: string }
+        cars:
+          type: array
+          maxItems: 5
+          items: { $ref: "#/components/schemas/RecommendedCar" }
+        suggestedAnswers:
+          type: array
+          items: { type: string }

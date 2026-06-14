@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: DriveMind Admin — Sync Control Plane API
+  version: 1.0.0
+  description: >
+    drivemind-admin (APP 2) endpoints. A dealer submits { apiUrl, token } and starts a Sync that
+    ingests the dealer's cars into the chatbot knowledge base in ~20-car batches (resumable), with
+    Gemini use_case extraction + 768-dim embedding and idempotent upsert on (dealer_id, source_car_id).
+    All provider keys and the Supabase service key are server-side only.
+servers:
+  - url: https://drivemind-admin.example.vercel.app
+paths:
+  /api/sync:
+    post:
+      summary: Start (or continue) a batched sync job for a dealer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dealerId, apiUrl, token]
+              properties:
+                dealerId: { type: string }
+                apiUrl: { type: string, format: uri, description: The dealer's GET /api/cars URL }
+                token: { type: string, description: Bearer token for the dealer API (server-side use only) }
+                jobId: { type: string, description: Provide to continue an existing job's next batch }
+      responses:
+        "200":
+          description: Batch processed; job state returned. Continue until status=completed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SyncJob" }
+        "400": { description: Invalid apiUrl/token or unreachable dealer API. }
+        "502": { description: Upstream (dealer API / Gemini) error after retries. }
+  /api/sync/{jobId}:
+    get:
+      summary: Get sync progress and searchable-car count
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Current job progress.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SyncJob" }
+        "404": { description: Unknown jobId. }
+components:
+  schemas:
+    SyncJob:
+      type: object
+      required: [id, dealerId, status, processed, searchableCount]
+      properties:
+        id: { type: string }
+        dealerId: { type: string }
+        status: { type: string, enum: [running, completed, failed] }
+        total: { type: integer, description: Total cars pulled from source (known after first fetch) }
+        processed: { type: integer, description: Cars upserted so far (resumable cursor) }
+        searchableCount: { type: integer, description: Cars currently searchable for this dealer }
+        error: { type: string, nullable: true }

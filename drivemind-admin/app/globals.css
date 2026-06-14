@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #08080a;
+  --foreground: #f4f4f6;
+}
+
+@layer base {
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    color: var(--foreground);
+    background: var(--background);
+  }
+  ::selection {
+    background: #e11d2a;
+    color: #fff;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0d11;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a33;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e11d2a;
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-5xl px-5 sm:px-8;
+  }
+  .eyebrow {
+    @apply font-condensed text-xs uppercase tracking-mega text-accent;
+  }
+  .surface {
+    @apply rounded-2xl border border-white/10 bg-carbon;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-condensed text-sm uppercase tracking-widest text-white transition-all duration-300 hover:bg-accent-bright hover:shadow-glow disabled:cursor-default disabled:opacity-50 disabled:hover:bg-accent disabled:hover:shadow-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-6 py-3 font-condensed text-sm uppercase tracking-widest text-fog transition-all duration-300 hover:border-accent hover:text-accent;
+  }
+  .field {
+    @apply w-full rounded-xl border border-white/10 bg-coal px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-ash hover:border-white/25 focus:border-accent;
+  }
+  .field-label {
+    @apply mb-1.5 block font-condensed text-[11px] uppercase tracking-widest text-ash;
+  }
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

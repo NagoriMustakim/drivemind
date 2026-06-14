@@ -1,0 +1,26 @@
+# Root workspace ignore (the three apps each also have their own .gitignore).
+# Per Constitution Principle I each app is its own repo; this root file only
+# helps when the colocated demo workspace is initialized as a single repo.
+
+node_modules/
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/coverage/
+**/next-env.d.ts
+.dev-logs
+
+# env / secrets — NEVER commit
+.env
+**/.env
+**/.env*.local
+
+# misc
+.DS_Store
+*.log
+*.tmp
+*.swp
+.vscode/
+.idea/
+.vercel
